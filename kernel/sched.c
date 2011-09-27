@@ -7883,7 +7883,6 @@ void __init sched_init(void)
 #ifdef CONFIG_CGROUP_SCHED
 	list_add(&init_task_group.list, &task_groups);
 	INIT_LIST_HEAD(&init_task_group.children);
-
 #endif /* CONFIG_CGROUP_SCHED */
 
 #if defined CONFIG_FAIR_GROUP_SCHED && defined CONFIG_SMP
@@ -8430,7 +8429,7 @@ void sched_move_task(struct task_struct *tsk)
 {
 	int on_rq, running;
 	unsigned long flags;
-	struct rq *rq;
+ 	struct rq *rq;
 
 	rq = task_rq_lock(tsk, &flags);
 
@@ -8458,7 +8457,6 @@ void sched_move_task(struct task_struct *tsk)
 		tsk->sched_class->set_curr_task(rq);
 	if (on_rq)
 		enqueue_task(rq, tsk, 0);
-
 	task_rq_unlock(rq, &flags);
 }
 #endif /* CONFIG_CGROUP_SCHED */

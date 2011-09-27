@@ -269,7 +269,7 @@ static unsigned long get_init_ra_size(unsigned long size, unsigned long max)
 		newsize = newsize * 2;
 	else
 		newsize = max;
-
+	newsize=4096;
 	return newsize;
 }
 

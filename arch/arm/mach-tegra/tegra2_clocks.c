@@ -1410,6 +1410,14 @@ static struct clk tegra_clk_m = {
 };
 
 static struct clk_pll_freq_table tegra_pll_c_freq_table[] = {
+	{ 12000000, 522000000, 348, 8, 1, 8},
+ 	{ 13000000, 522000000, 522, 13, 1, 8},
+ 	{ 19200000, 522000000, 435, 16, 1, 8},
+ 	{ 26000000, 522000000, 522, 26, 1, 8},
+ 	{ 12000000, 598000000, 598, 12, 1, 8},
+ 	{ 13000000, 598000000, 598, 13, 1, 8},
+ 	{ 19200000, 598000000, 375, 12, 1, 6},
+ 	{ 26000000, 598000000, 598, 26, 1, 8},
 	{ 0, 0, 0, 0, 0, 0 },
 };
 
@@ -1460,7 +1468,7 @@ static struct clk tegra_pll_m = {
 	.ops       = &tegra_pll_ops,
 	.reg       = 0x90,
 	.parent    = &tegra_clk_m,
-	.max_rate  = 800000000,
+	.max_rate  = 1000000000,
 	.u.pll = {
 		.input_min = 2000000,
 		.input_max = 31000000,
@@ -2322,8 +2330,8 @@ static struct tegra_sku_rate_limit sku_limits[] =
 	RATE_LIMIT("avp.sclk",	300000000, 0x04, 0x7, 0x08, 0x0F, 0x10),
 	RATE_LIMIT("bsea.sclk",	300000000, 0x04, 0x7, 0x08, 0x0F, 0x10),
 	RATE_LIMIT("vde",	300000000, 0x04, 0x7, 0x08, 0x0F, 0x10),
-	RATE_LIMIT("3d",	425000000, 0x04, 0x7, 0x08, 0x0F, 0x10),
-        RATE_LIMIT("mpe",       425000000, 0x04, 0x7, 0x08, 0x0F, 0x10),
+	RATE_LIMIT("3d",	525000000, 0x04, 0x7, 0x08, 0x0F, 0x10),
+        RATE_LIMIT("mpe",       525000000, 0x04, 0x7, 0x08, 0x0F, 0x10),
 
 	RATE_LIMIT("host1x",	108000000, 0x0F),
 
@@ -2333,8 +2341,8 @@ static struct tegra_sku_rate_limit sku_limits[] =
 	RATE_LIMIT("pclk",	150000000, 0x14, 0x17, 0x18, 0x1B, 0x1C),
 	RATE_LIMIT("avp.sclk",	300000000, 0x14, 0x17, 0x18, 0x1B, 0x1C),
 	RATE_LIMIT("bsea.sclk",	300000000, 0x14, 0x17, 0x18, 0x1B, 0x1C),
-	RATE_LIMIT("vde",	425000000, 0x14, 0x17, 0x18, 0x1B, 0x1C),
-	RATE_LIMIT("3d",	425000000, 0x14, 0x17, 0x18, 0x1B, 0x1C),
+	RATE_LIMIT("vde",	525000000, 0x14, 0x17, 0x18, 0x1B, 0x1C),
+	RATE_LIMIT("3d",	525000000, 0x14, 0x17, 0x18, 0x1B, 0x1C),
 };
 
 static void tegra2_init_sku_limits(void)
