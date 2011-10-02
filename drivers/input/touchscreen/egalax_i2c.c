@@ -47,7 +47,7 @@
 #define KERNEL_LEVEL_DEBUG 0
 
 /* the kernel supports 5 fingers only as of now */
-#define SUPPORTED_FINGERS 4
+#define SUPPORTED_FINGERS 5
 #define TOOL_PRESSURE	-1
 
 #define SUPPORT_USER_LEVEL		1

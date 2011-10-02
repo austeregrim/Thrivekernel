@@ -685,6 +685,9 @@ static ssize_t store_ehci_power(struct device *dev,
 
 	if (sscanf(buf, "%d", &power_on) != 1)
 		return -EINVAL;
+	/* make sure controller is on as we will touch its registers */
+	if (!tegra->host_resumed)
+		tegra_ehci_power_up(hcd);
 
 	if (power_on == 0 && ehci_handle != NULL) {
 		usb_remove_hcd(hcd);

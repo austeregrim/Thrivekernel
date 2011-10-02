@@ -134,8 +134,8 @@ static struct tps6586x_settings sm1_config = {
 #define ON	1
 #define OFF	0
 
-static struct regulator_init_data sm0_data = REGULATOR_INIT(sm0, 725, 1500, ON, NULL);
-static struct regulator_init_data sm1_data = REGULATOR_INIT(sm1, 725, 1500, ON, &sm1_config);
+static struct regulator_init_data sm0_data = REGULATOR_INIT(sm0, 725, 1600, ON, NULL);
+static struct regulator_init_data sm1_data = REGULATOR_INIT(sm1, 725, 1600, ON, &sm1_config);
 static struct regulator_init_data sm2_data = REGULATOR_INIT(sm2, 3000, 4550, ON, NULL);
 static struct regulator_init_data ldo0_data = REGULATOR_INIT(ldo0, 1250, 3300, OFF, NULL);
 static struct regulator_init_data ldo1_data = REGULATOR_INIT(ldo1, 725, 1500, ON, NULL);

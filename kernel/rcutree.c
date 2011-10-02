@@ -587,9 +587,17 @@ static void __init check_cpu_stall_init(void)
 static void __note_new_gpnum(struct rcu_state *rsp, struct rcu_node *rnp, struct rcu_data *rdp)
 {
 	if (rdp->gpnum != rnp->gpnum) {
-		rdp->qs_pending = 1;
-		rdp->passed_quiesc = 0;
+		/*
+		 * If the current grace period is waiting for this CPU,
+		 * set up to detect a quiescent state, otherwise don't
+		 * go looking for one.
+		 */
 		rdp->gpnum = rnp->gpnum;
+		if (rnp->qsmask & rdp->grpmask) {
+			rdp->qs_pending = 1;
+			rdp->passed_quiesc = 0;
+		} else
+			rdp->qs_pending = 0;
 	}
 }
 
@@ -648,6 +656,24 @@ __rcu_process_gp_end(struct rcu_state *rsp, struct rcu_node *rnp, struct rcu_dat
 
 		/* Remember that we saw this grace-period completion. */
 		rdp->completed = rnp->completed;
+
+		/*
+		 * If we were in an extended quiescent state, we may have
+		 * missed some grace periods that others CPUs handled on
+		 * our behalf. Catch up with this state to avoid noting
+		 * spurious new grace periods.  If another grace period
+		 * has started, then rnp->gpnum will have advanced, so
+		 * we will detect this later on.
+		 */
+		if (ULONG_CMP_LT(rdp->gpnum, rdp->completed))
+			rdp->gpnum = rdp->completed;
+
+		/*
+		 * If RCU does not need a quiescent state from this CPU,
+		 * then make sure that this CPU doesn't go looking for one.
+		 */
+		if ((rnp->qsmask & rdp->grpmask) == 0)
+			rdp->qs_pending = 0;
 	}
 }
 
@@ -971,6 +997,7 @@ static void rcu_send_cbs_to_orphanage(struct rcu_state *rsp)
 	for (i = 0; i < RCU_NEXT_SIZE; i++)
 		rdp->nxttail[i] = &rdp->nxtlist;
 	rsp->orphan_qlen += rdp->qlen;
+	rdp->n_cbs_orphaned += rdp->qlen;
 	rdp->qlen = 0;
 	raw_spin_unlock(&rsp->onofflock);  /* irqs remain disabled. */
 }
@@ -992,6 +1019,7 @@ static void rcu_adopt_orphan_cbs(struct rcu_state *rsp)
 	*rdp->nxttail[RCU_NEXT_TAIL] = rsp->orphan_cbs_list;
 	rdp->nxttail[RCU_NEXT_TAIL] = rsp->orphan_cbs_tail;
 	rdp->qlen += rsp->orphan_qlen;
+	rdp->n_cbs_adopted += rsp->orphan_qlen;
 	rsp->orphan_cbs_list = NULL;
 	rsp->orphan_cbs_tail = &rsp->orphan_cbs_list;
 	rsp->orphan_qlen = 0;
@@ -1123,6 +1151,7 @@ static void rcu_do_batch(struct rcu_state *rsp, struct rcu_data *rdp)
 
 	/* Update count, and requeue any remaining callbacks. */
 	rdp->qlen -= count;
+	rdp->n_cbs_invoked += count;
 	if (list != NULL) {
 		*tail = rdp->nxtlist;
 		rdp->nxtlist = list;
@@ -1843,8 +1872,9 @@ static void __init rcu_init_levelspread(struct rcu_state *rsp)
 {
 	int i;
 
-	for (i = NUM_RCU_LVLS - 1; i >= 0; i--)
+	for (i = NUM_RCU_LVLS - 1; i > 0; i--)
 		rsp->levelspread[i] = CONFIG_RCU_FANOUT;
+	rsp->levelspread[0] = RCU_FANOUT_LEAF;
 }
 #else /* #ifdef CONFIG_RCU_FANOUT_EXACT */
 static void __init rcu_init_levelspread(struct rcu_state *rsp)

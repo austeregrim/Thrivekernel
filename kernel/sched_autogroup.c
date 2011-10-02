@@ -235,6 +235,7 @@ void proc_sched_autogroup_show_task(struct task_struct *p, struct seq_file *m)
 	seq_printf(m, "/autogroup-%ld nice %d\n", ag->id, ag->nice);
 	up_read(&ag->lock);
 
+out:
 	autogroup_kref_put(ag);
 }
 #endif /* CONFIG_PROC_FS */

@@ -1461,7 +1461,7 @@ static int sched_autogroup_open(struct inode *inode, struct file *filp)
 static const struct file_operations proc_pid_sched_autogroup_operations = {
   .open    = sched_autogroup_open,
   .read    = seq_read,
-  .write    = sched_autogroup_write, 	1466	
+  .write    = sched_autogroup_write,
   .llseek    = seq_lseek,
   .release  = single_release,
 };

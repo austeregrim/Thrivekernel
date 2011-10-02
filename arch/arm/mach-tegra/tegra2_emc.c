@@ -277,7 +277,7 @@ void tegra_init_emc(const struct tegra_emc_chip *chips, int chips_size)
 		tegra_emc_table_size = chips[chip_matched].table_size;
 
 		tegra_emc_min_bus_rate = tegra_emc_table[0].rate * 2 * 1000;
- 		tegra_emc_max_bus_rate = tegra_emc_table[tegra_emc_table_size - 1].rate * 2 * 1000;
+ 		tegra_emc_max_bus_rate = tegra_emc_table[tegra_emc_table_size - 1].rate * 3 * 1000;
 	} else {
 		pr_err("%s: Memory not recognized, memory scaling disabled\n",
 			__func__);

@@ -21,6 +21,7 @@
  */
 
 #include <linux/kernel.h>
+#include <linux/ctype.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/sched.h>
@@ -51,6 +52,7 @@
 #include <mach/iovmm.h>
 #include <mach/irqs.h>
 #include <mach/legacy_irq.h>
+#include <mach/powergate.h>
 #include <mach/suspend.h>
 
 #include "board.h"
@@ -164,6 +166,58 @@ static enum tegra_suspend_mode current_suspend_mode;
 
 static unsigned int tegra_time_in_suspend[32];
 
+struct kobject *suspend_kobj;
+
+static const char *tegra_suspend_name[TEGRA_MAX_SUSPEND_MODE] = {
+	[TEGRA_SUSPEND_NONE]    = "none",
+	[TEGRA_SUSPEND_LP2]     = "lp2",
+	[TEGRA_SUSPEND_LP1]     = "lp1",
+	[TEGRA_SUSPEND_LP0]     = "lp0",
+};
+
+static ssize_t suspend_mode_show(struct kobject *kobj,
+					struct kobj_attribute *attr, char *buf)
+{
+	char *start = buf;
+	char *end = buf + PAGE_SIZE;
+
+	start += scnprintf(start, end - start, "%s ", \
+				tegra_suspend_name[current_suspend_mode]);
+	start += scnprintf(start, end - start, "\n");
+
+	return start - buf;
+}
+
+static ssize_t suspend_mode_store(struct kobject *kobj,
+					struct kobj_attribute *attr,
+						const char *buf, size_t n)
+{
+	int len;
+	const char *name_ptr;
+	enum tegra_suspend_mode new_mode;
+
+	name_ptr = buf;
+	while (*name_ptr && !isspace(*name_ptr))
+		name_ptr++;
+	len = name_ptr - buf;
+	if (!len)
+		goto bad_name;
+
+	for (new_mode = TEGRA_SUSPEND_NONE;				\
+				new_mode < TEGRA_MAX_SUSPEND_MODE; ++new_mode) {
+		if (!strncmp(buf, tegra_suspend_name[new_mode], len)) {
+			current_suspend_mode = new_mode;
+			break;
+		}
+	}
+
+bad_name:
+	return n;
+}
+
+static struct kobj_attribute suspend_mode_attribute =
+	__ATTR(mode, 0666, suspend_mode_show, suspend_mode_store);
+
 static inline unsigned int time_to_bin(unsigned int time)
 {
 	return fls(time);
@@ -190,7 +244,7 @@ enum tegra_suspend_mode tegra_get_suspend_mode(void)
 	if (!pdata)
 		return TEGRA_SUSPEND_NONE;
 
-	return pdata->suspend_mode;
+	return current_suspend_mode;
 }
 
 static void set_power_timers(unsigned long us_on, unsigned long us_off,
@@ -296,7 +350,10 @@ static noinline void restore_cpu_complex(void)
 	 * by CPU boot-up code - wait for PLL stabilization if PLLX
 	 * was enabled, or if explicitly requested by caller */
 
-	BUG_ON(readl(clk_rst + CLK_RESET_PLLX_BASE) != tegra_sctx.pllx_base);
+	reg = readl(clk_rst + CLK_RESET_PLLX_BASE);
+	/* mask out bit 27 - not to check PLL lock bit */
+	BUG_ON((reg & (~(1 << 27))) !=
+			(tegra_sctx.pllx_base & (~(1 << 27))));
 
 	if (tegra_sctx.pllx_base & (1<<30)) {
 		while (readl(tmrus)-tegra_sctx.pll_timeout >= 0x80000000UL)
@@ -329,7 +386,7 @@ static noinline void suspend_cpu_complex(void)
 	unsigned int reg;
 	int i;
 
-	disable_irq(INT_SYS_STATS_MON);
+	disable_irq_nosync(INT_SYS_STATS_MON);
 
 	/* switch coresite to clk_m, save off original source */
 	tegra_sctx.clk_csite_src = readl(clk_rst + CLK_RESET_SOURCE_CSITE);
@@ -433,10 +490,37 @@ static u8 *iram_save = NULL;
 static unsigned int iram_save_size = 0;
 static void __iomem *iram_code = IO_ADDRESS(TEGRA_IRAM_CODE_AREA);
 
+static void tegra_suspend_check_pwr_stats(void)
+{
+	/* cpus and l2 are powered off later */
+	unsigned long pwrgate_partid_mask =
+#if !defined(CONFIG_ARCH_TEGRA_2x_SOC)
+		(1 << TEGRA_POWERGATE_HEG)      |
+		(1 << TEGRA_POWERGATE_SATA)     |
+		(1 << TEGRA_POWERGATE_3D1)      |
+#endif
+		(1 << TEGRA_POWERGATE_3D)       |
+		(1 << TEGRA_POWERGATE_VENC)     |
+		(1 << TEGRA_POWERGATE_PCIE)     |
+		(1 << TEGRA_POWERGATE_VDEC)     |
+		(1 << TEGRA_POWERGATE_MPE);
+
+	int partid;
+
+	for (partid = 0; partid < TEGRA_NUM_POWERGATE; partid++)
+		if ((1 << partid) & pwrgate_partid_mask)
+			if (tegra_powergate_is_powered(partid))
+				pr_warning("partition %s is left on before suspend\n",
+							tegra_powergate_get_name(partid));
+	return;
+}
+
 static void tegra_suspend_dram(bool do_lp0)
 {
 	unsigned int mode = TEGRA_POWER_SDRAM_SELFREFRESH;
 	unsigned long orig, reg;
+
+	tegra_suspend_check_pwr_stats();
 
 	orig = readl(evp_reset);
 	/* copy the reset vector and SDRAM shutdown code into IRAM */
@@ -917,16 +1001,18 @@ void __init tegra_init_suspend(struct tegra_suspend_platform_data *plat)
 #endif
 
 	current_suspend_mode = plat->suspend_mode;
+
+	/* Create /sys/power/suspend/type */
+	suspend_kobj = kobject_create_and_add("suspend", power_kobj);
+	if (suspend_kobj) {
+		if (sysfs_create_file(suspend_kobj, \
+						&suspend_mode_attribute.attr))
+			pr_err("%s: sysfs_create_file suspend type failed!", \
+								__func__);
+	}
 }
 
 #ifdef CONFIG_DEBUG_FS
-static const char *tegra_suspend_name[TEGRA_MAX_SUSPEND_MODE] = {
-	[TEGRA_SUSPEND_NONE]	= "none",
-	[TEGRA_SUSPEND_LP2]	= "lp2",
-	[TEGRA_SUSPEND_LP1]	= "lp1",
-	[TEGRA_SUSPEND_LP0]	= "lp0",
-};
-
 static int tegra_suspend_debug_show(struct seq_file *s, void *data)
 {
 	seq_printf(s, "%s\n", tegra_suspend_name[*(int *)s->private]);
