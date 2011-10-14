@@ -45,7 +45,7 @@
 #include "dc_priv.h"
 #include "overlay.h"
 
-static int no_vsync;
+static int no_vsync = 0;
 static int set_gamma = 1;
 static int gamma_lut_red[257]=
 {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,

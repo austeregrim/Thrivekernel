@@ -38,41 +38,41 @@ static bool tegra_dvfs_cpu_disabled = true;
 #endif
 
 static const int core_millivolts[MAX_DVFS_FREQS] =
-	{950, 1000, 1100, 1225, 1275, 1275, 1350};
+	{900, 950, 1000, 1150, 1200, 1225, 1275, 1325, 1375, 1400, 1500};
 static const int cpu_millivolts[MAX_DVFS_FREQS] =
-	{725, 750, 800, 900, 975, 1000, 1050, 1100, 1200, 1275, 1300, 1325, 1450, 1450};
+	{600, 675, 700, 750, 775, 800, 850, 875, 1050, 1100, 1150, 1175, 1275, 1425, 1450, 1450};
 
 static const int cpu_speedo_nominal_millivolts[] =
 /* spedo_id  0,    1,    2 */
-	{ 1100, 1400, 1150 };
+	{ 1200, 1350, 1200 };
 
 static const int core_speedo_nominal_millivolts[] =
 /* spedo_id  0,    1,    2 */
-	{ 1225, 1400, 1250 };
+	{ 1300, 1400, 1300 };
 
 #define KHZ 1000
 #define MHZ 1000000
 
 static struct dvfs_rail tegra2_dvfs_rail_vdd_cpu = {
 	.reg_id = "vdd_cpu",
-	.max_millivolts = 1550, //1125
-	.min_millivolts = 725,
-	.nominal_millivolts = 1550, //1125
+	.max_millivolts = 1450, //1125
+	.min_millivolts = 650,
+	.nominal_millivolts = 1350, //1125
 };
 
 static struct dvfs_rail tegra2_dvfs_rail_vdd_core = {
 	.reg_id = "vdd_core",
-	.max_millivolts = 1600, //1300
-	.min_millivolts = 950,
-	.nominal_millivolts = 1525, //1225
+	.max_millivolts = 1500, //1300
+	.min_millivolts = 900,
+	.nominal_millivolts = 1400, //1225
 	.step = 150, /* step vdd_core by 150 mV to allow vdd_aon to follow */
 };
 
 static struct dvfs_rail tegra2_dvfs_rail_vdd_aon = {
 	.reg_id = "vdd_aon",
-	.max_millivolts = 1600, //1300
+	.max_millivolts = 1500, //1300
 	.min_millivolts = 950,
-	.nominal_millivolts = 1525, //1225
+	.nominal_millivolts = 1400, //1225
 #ifndef CONFIG_TEGRA_CORE_DVFS
 	.disabled = true,
 #endif
@@ -159,11 +159,11 @@ static struct dvfs dvfs_init[] = {
 	CPU_DVFS("cpu", 0, 2, MHZ, 494, 494, 494, 675, 675, 817,  817,  922,  922,  1000),
 	CPU_DVFS("cpu", 0, 3, MHZ, 730, 760, 845, 845, 940, 1000),
 
-	CPU_DVFS("cpu", 1, 0, MHZ, 216, 312, 456, 608, 760,  816,  912,  1000, 1232, 1336, 1424, 1472, 1544, 1592),
-	CPU_DVFS("cpu", 1, 1, MHZ, 216, 312, 456, 608, 760,  816,  912,  1000, 1232, 1336, 1424, 1472, 1544, 1592),
-	CPU_DVFS("cpu", 1, 2, MHZ, 816, 912, 1000, 1232, 1336, 1424, 1472, 1544, 1592),
-	CPU_DVFS("cpu", 1, 3, MHZ, 912, 1000, 1232, 1336, 1424, 1472, 1544, 1592),
-
+	/* Cpu voltages (mV):      750, 775, 800, 850, 875, 900, 950,  975,  1125, 1200, 1250, 1275, 1350, 1425, 1450, 1450 */
+	CPU_DVFS("cpu", 1, 0, MHZ, 380, 380, 503, 503, 655, 655, 798,  798,  902,  902,  960,  1000, 1232, 1424, 1544, 1656),
+	CPU_DVFS("cpu", 1, 1, MHZ, 216, 312, 456, 608, 760, 816, 912,  1000, 1232, 1336, 1424, 1472, 1544, 1592, 1656, 1680),
+	CPU_DVFS("cpu", 1, 2, MHZ, 598, 598, 750, 750, 893, 893, 1000, 1232, 1424, 1544, 1656),
+	CPU_DVFS("cpu", 1, 3, MHZ, 730, 760, 845, 845, 940, 1000,1232, 1424, 1544, 1656),
 
 	CPU_DVFS("cpu", 2, 0, MHZ,   0,   0,   0,   0, 655, 655,  798,  798,  902,  902,  960,  1000, 1100, 1100, 1200),
 	CPU_DVFS("cpu", 2, 1, MHZ,   0,   0,   0,   0, 655, 760,  798,  798,  950,  950,  1015, 1015, 1100, 1200),
@@ -171,7 +171,7 @@ static struct dvfs dvfs_init[] = {
 	CPU_DVFS("cpu", 2, 3, MHZ,   0,   0,   0,   0, 940, 1000, 1000, 1000, 1130, 1130, 1200),
 
 	/* Core voltages (mV):           950,    1000,   1100,   1200,   1225,   1275,   1300 */
-	CORE_DVFS("emc",     -1, 1, KHZ, 57000,  333000, 380000, 666000, 666000, 666000, 760000),
+	CORE_DVFS("emc",     -1, 1, KHZ, 57000,  333000, 380000, 666000, 666000, 666000, 666000, 666000, 666000, 666000),
 
 #if 0
 	/*
@@ -239,7 +239,7 @@ static struct dvfs dvfs_init[] = {
 	CORE_DVFS("vde",      2, 1, KHZ, 171000, 218500, 300000, 300000, 300000, 300000, 300000),
 	CORE_DVFS("vde",      3, 1, KHZ, 171000, 218500, 300000, 300000, 300000, 300000, 300000),
 	/* What is this? */
-	CORE_DVFS("NVRM_DEVID_CLK_SRC", -1, 1, MHZ, 480, 600, 800, 1067, 1067, 1067, 1067),
+	CORE_DVFS("NVRM_DEVID_CLK_SRC", -1, 1, MHZ, 480, 600, 800, 1067, 1067, 1067, 1067, 1067, 1067, 1067),
 };
 
 int tegra_dvfs_disable_core_set(const char *arg, const struct kernel_param *kp)

@@ -158,17 +158,17 @@ static struct resource antares_disp2_resources[] = {
 
 static struct tegra_dc_mode antares_panel_modes[] = {
 	{
-		.pclk = 72072000,
+		.pclk = 62200000,
 		.h_ref_to_sync = 11,
 		.v_ref_to_sync = 1,
-		.h_sync_width = 58,
-		.v_sync_width = 4,
-		.h_back_porch = 58,
-		.v_back_porch = 4,
+		.h_sync_width = 42,
+		.v_sync_width =6,
+		.h_back_porch = 43,
+		.v_back_porch = 5,
 		.h_active = 1366,
 		.v_active = 768,
-		.h_front_porch = 58,
-		.v_front_porch = 4,
+		.h_front_porch = 43,
+		.v_front_porch = 5,
 	},
 };
 

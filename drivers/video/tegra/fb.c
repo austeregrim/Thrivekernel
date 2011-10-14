@@ -184,8 +184,8 @@ static int tegra_fb_set_par(struct fb_info *info)
 		}
 
 		mode.pclk = PICOS2KHZ(info->mode->pixclock) * 1000;
-		mode.h_ref_to_sync = 1;
-		mode.v_ref_to_sync = 1;
+		mode.h_ref_to_sync = 0;
+		mode.v_ref_to_sync = 0;
 		mode.h_sync_width = info->mode->hsync_len;
 		mode.v_sync_width = info->mode->vsync_len;
 		mode.h_back_porch = info->mode->left_margin;

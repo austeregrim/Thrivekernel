@@ -1567,6 +1567,12 @@ config CMDLINE_FORCE
 
 	  If unsure, say N.
 
+config CMDLINE_PREPEND_THRIVE
+    string "Silly hack for changing boot params on thirve"
+    default y
+    help
+      Better have CONFIG_CMDLINE set to something!!
+
 config XIP_KERNEL
 	bool "Kernel Execute-In-Place from ROM"
 	depends on !ZBOOT_ROM
